@@ -1,0 +1,60 @@
+{
+  "contracts": {
+    "0x158079ee67fce2f58472a96584a73c7ab9ac95c1": {
+      "name": "Compound Augur",
+      "symbol": "cREP",
+      "token_address": "0x158079ee67fce2f58472a96584a73c7ab9ac95c1",
+      "underlying_address": "0x1985365e9f78359a9b6ad760e32412f4a445e862",
+      "underlying_symbol": "REP",
+      "underlying_name": "Augur"
+    },
+    "0x39aa39c021dfbae8fac545936693ac917d5e7563": {
+      "name": "Compound USD Coin",
+      "symbol": "cUSDC",
+      "token_address": "0x39aa39c021dfbae8fac545936693ac917d5e7563",
+      "underlying_address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "underlying_name": "USD Coin",
+      "underlying_symbol": "USDC"
+    },
+    "0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5": {
+      "name": "Compound Ether",
+      "symbol": "cETH",
+      "token_address": "0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5",
+      "underlying_address": null,
+      "underlying_name": "Ether",
+      "underlying_symbol": "ETH"
+    },
+    "0x6c8c6b02e7b2be14d4fa6022dfd6d75921d90e4e": {
+      "name": "Compound Basic Attention Token",
+      "symbol": "cBAT",
+      "token_address": "0x6c8c6b02e7b2be14d4fa6022dfd6d75921d90e4e",
+      "underlying_address": "0x0d8775f648430679a709e98d2b0cb6250d2887ef",
+      "underlying_name": "Basic Attention Token",
+      "underlying_symbol": "BAT"
+    },
+    "0xb3319f5d18bc0d84dd1b4825dcde5d5f7266d407": {
+      "name": "Compound 0x",
+      "symbol": "cZRX",
+      "token_address": "0xb3319f5d18bc0d84dd1b4825dcde5d5f7266d407",
+      "underlying_address": "0xe41d2489571d322189246dafa5ebde1f4699f498",
+      "underlying_name": "0x",
+      "underlying_symbol": "ZRX"
+    },
+    "0xc11b1268c1a384e55c48c2391d8d480264a3a7f4": {
+      "name": "Compound Wrapped BTC",
+      "symbol": "cWBTC",
+      "token_address": "0xc11b1268c1a384e55c48c2391d8d480264a3a7f4",
+      "underlying_address": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+      "underlying_name": "Wrapped BTC",
+      "underlying_symbol": "WBTC"
+    },
+    "0xf5dce57282a584d2746faf1593d3121fcac444dc": {
+      "name": "Compound Dai",
+      "symbol": "cDAI",
+      "token_address": "0xf5dce57282a584d2746faf1593d3121fcac444dc",
+      "underlying_address": "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359",
+      "underlying_name": "Dai",
+      "underlying_symbol": "DAI"
+    }
+  }
+}
