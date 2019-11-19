@@ -15,6 +15,7 @@ const etherscanAPIKey = "WKBMNJ4SNUP1QCUY6E8CJEZ3JCJNUJI5AR";
 const coinmarketKey = "2cb6535e-4766-4c8b-9202-13913cddde89";
 const amberKey = "UAK55ce920d969018431af2164bb7187233";
 const { isToday } = require("date-fns");
+const CryptoJS = require("crypto-js");
 
 const app = express();
 
@@ -213,6 +214,39 @@ const compoundActiveMarkets = async (cMarkets, wallet) => {
 /**
  * FUNCTIONS
  */
+
+app.post("/encrypt-wyre-token", async (req, res) => {
+  const key = functions.config().encryption.key;
+
+  const wyreToken = CryptoJS.AES.encrypt(req.body.token, key);
+
+  await admin
+    .firestore()
+    .collection("users")
+    .doc(req.body.userId)
+    .update({ wyreToken });
+
+  res.end();
+});
+
+app.post("/decrypt-wyre-token", async (req, res) => {
+  const key = functions.config().encryption.key;
+
+  const result = await admin
+    .firestore()
+    .collection("users")
+    .doc(req.body.userId)
+    .get();
+
+  const bytes = CryptoJS.AES.decrypt(result.data().wyreToken.toString(), key);
+  const decryptedToken = bytes.toString(CryptoJS.enc.Utf8);
+
+  res.json({ wyreToken: decryptedToken });
+
+  res.end();
+});
+
+exports.api = functions.https.onRequest(app);
 
 exports.removeUser = functions.auth.user().onDelete(async user => {
   return await db
@@ -413,12 +447,13 @@ exports.updateShortTermHistory = functions.pubsub
 // Every other day at 3 EST, remove the last 1440 daily records
 exports.removeShortTermHistory = functions.pubsub
   .schedule("0 3 */2 * *")
+  // .schedule("*/1 * * * *")
   .timeZone("America/New_York")
   .onRun(async () => {
     const users = await db.collection("users").get();
 
     // [[]];
-    const batchChunks = users.docs.map(async snap => {
+    const userChunks = users.docs.map(async snap => {
       const dailies = await db
         .collection("users")
         .doc(snap.id)
@@ -429,11 +464,9 @@ exports.removeShortTermHistory = functions.pubsub
         doc => !isToday(new Date(doc.data().date))
       );
 
-      console.log("TOTAL", data.length);
+      console.log("TOTAL DATAPOINTS", data.length);
 
       return chunk(data, 499).map(chunk => {
-        console.log("CHUNK", chunk.length);
-
         const batch = db.batch();
 
         chunk.forEach(datapoint => {
@@ -455,21 +488,23 @@ exports.removeShortTermHistory = functions.pubsub
       minTime: 50
     });
 
-    const batches = await Promise.all(batchChunks);
+    const userBatches = await Promise.all(userChunks);
 
-    console.log("BATCHES", batches);
+    console.log("BATCHES", userBatches);
 
     const result = await Promise.all(
-      batches.map(batch => {
-        console.log(batch);
-        if (batch) {
-          return limiter.schedule(() => batch.commit());
-        }
-        return null;
-      })
+      userBatches.map(batches =>
+        batches.map(batch => {
+          if (batch) {
+            console.log("BATCH", batch);
+            return limiter.schedule(() => batch.commit());
+          }
+          return null;
+        })
+      )
     );
 
     console.log(`Remove short-term success`);
     console.log(result);
-    return result;
+    return true;
   });
