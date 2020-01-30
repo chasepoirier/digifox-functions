@@ -218,13 +218,17 @@ const compoundActiveMarkets = async (cMarkets, wallet) => {
 app.post("/encrypt-wyre-token", async (req, res) => {
   const key = functions.config().encryption.key;
 
-  const wyreToken = CryptoJS.AES.encrypt(req.body.token, key);
+  const { type, userId, accountType } = req.body;
+
+  const account = accountType || "users";
+
+  const token = CryptoJS.AES.encrypt(req.body.token, key).toString();
 
   await admin
     .firestore()
-    .collection("users")
-    .doc(req.body.userId)
-    .update({ wyreToken });
+    .collection(account)
+    .doc(userId)
+    .update({ [type === "BANK" ? "wyreBankToken" : "wyreCardToken"]: token });
 
   res.end();
 });
@@ -232,13 +236,20 @@ app.post("/encrypt-wyre-token", async (req, res) => {
 app.post("/decrypt-wyre-token", async (req, res) => {
   const key = functions.config().encryption.key;
 
+  const { userId, type, accountType } = req.body;
+
+  const account = accountType || "users";
+
   const result = await admin
     .firestore()
-    .collection("users")
-    .doc(req.body.userId)
+    .collection(account)
+    .doc(userId)
     .get();
 
-  const bytes = CryptoJS.AES.decrypt(result.data().wyreToken.toString(), key);
+  const token = type === "BANK" ? "wyreBankToken" : "wyreCardToken";
+
+  const bytes = CryptoJS.AES.decrypt(result.data()[token], key);
+
   const decryptedToken = bytes.toString(CryptoJS.enc.Utf8);
 
   res.json({ wyreToken: decryptedToken });
@@ -249,10 +260,21 @@ app.post("/decrypt-wyre-token", async (req, res) => {
 exports.api = functions.https.onRequest(app);
 
 exports.removeUser = functions.auth.user().onDelete(async user => {
-  return await db
-    .collection("users")
-    .doc(user.uid)
-    .delete();
+  try {
+    await db
+      .collection("users")
+      .doc(user.uid)
+      .delete();
+    await db
+      .collection("merchants")
+      .doc(user.uid)
+      .delete();
+
+    return `${user.uid} deleted.`;
+  } catch (error) {
+    console.log("DELETE ERROR", error);
+    return error.message;
+  }
 });
 
 // exports.updateContractABIs = functions
@@ -284,6 +306,77 @@ exports.removeUser = functions.auth.user().onDelete(async user => {
 //     const result = await Promise.all(promises);
 //     console.log("SUCCESS", result);
 //     return result;
+//   });
+
+// exports.subscribeToBlockChanges = functions.pubsub
+//   .schedule("*/1 * * * *")
+//   .timeZone("America/New_York")
+//   .onRun(async () => {
+//     try {
+//       const subscription = await wssWeb3.eth.subscribe(
+//         "newBlockHeaders",
+//         (error, data) => {
+//           if (error) {
+//             console.log("ERROR", error);
+//             return error;
+//           }
+//           return data;
+//         }
+//       );
+//       subscription.on("error", error => {
+//         console.log(error);
+//       });
+//       subscription.on("data", async data => {
+//         console.log("DATA", data);
+//         const block = await wssWeb3.eth.getBlock(data.number);
+//         console.log("NEW BLOCK MINED", block.number);
+//         if (block && block.transactions) {
+//           console.log(block.transactions.length, "TXs found");
+//           block.transactions.forEach(async function(e) {
+//             console.log(e.to, e.from);
+//             // const from = await db
+//             //   .collection("users")
+//             //   .where("address", "==", e.from)
+//             //   .get();
+//             // const to = await db
+//             //   .collection("users")
+//             //   .where("address", "==", e.to)
+//             //   .get();
+
+//             // if (from.size !== 0) {
+//             //   console.log("SENT TX FOUND", e);
+//             //   await db
+//             //     .collection("users")
+//             //     .doc(from.docs[0].id)
+//             //     .collection("transactions")
+//             //     .doc(e.hash)
+//             //     .set(e);
+//             // } else if (to.size !== 0) {
+//             //   console.log("RECEIVED TX FOUND", e);
+//             //   await db
+//             //     .collection("users")
+//             //     .doc(to.docs[0].id)
+//             //     .collection("transactions")
+//             //     .doc(e.hash)
+//             //     .set(e);
+//             // }
+//           });
+//         }
+//       });
+
+//       setTimeout(() => {
+//         subscription.subscription.unsubscribe((err, success) => {
+//           if (success) {
+//             console.log("UNSUBSCRIBED");
+//           }
+//           if (err) {
+//             console.log("ERROR", err);
+//           }
+//         });
+//       }, 60000);
+//     } catch (error) {
+//       console.log("BLOCK ERROR", error.message);
+//     }
 //   });
 
 // .schedule("*/15 * * * *")
